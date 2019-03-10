@@ -21,11 +21,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.UrlResource;
 
+import com.hackfac.DTO.OutReachEventSummeryDTO;
 import com.hackfac.DTO.OutReachNotRegisteredDTO;
 import com.hackfac.DTO.OutReachRegisteredDTO;
 import com.hackfac.listener.JobCompletionNotificationListener;
+import com.hackfac.processoe.OutReachEventSummeryProcessor;
 import com.hackfac.processoe.OutReachNotRegisteredProcessor;
 import com.hackfac.processoe.OutReachRegisteredProcessor;
+import com.hackfac.rowmapper.EventSummeryRowmapper;
 import com.hackfac.rowmapper.NonRegisterUserRowmapper;
 import com.hackfac.rowmapper.RegisterUserRowmapper;
 
@@ -38,6 +41,9 @@ public class XlFileToDatabaseConfig {
 
 	@Value("${outreach.notregister}")
 	private String notregister;
+
+	@Value("${outreach.eventsummery}")
+	private String eventsummery;
 
 	@Autowired
 	public JobBuilderFactory jobBuilderFactory;
@@ -71,6 +77,16 @@ public class XlFileToDatabaseConfig {
 	}
 
 	@Bean
+	public ItemReader<OutReachEventSummeryDTO> xlOutReachEventSummeryReader() throws MalformedURLException {
+		PoiItemReader<OutReachEventSummeryDTO> reader = new PoiItemReader<>();
+
+		reader.setLinesToSkip(1);
+		reader.setResource(new UrlResource("file:" + eventsummery));
+		reader.setRowMapper(new EventSummeryRowmapper());
+		return reader;
+	}
+
+	@Bean
 	ItemProcessor<OutReachNotRegisteredDTO, OutReachNotRegisteredDTO> xlOutReachNotRegisteredProcessor() {
 		return new OutReachNotRegisteredProcessor();
 	}
@@ -78,6 +94,11 @@ public class XlFileToDatabaseConfig {
 	@Bean
 	ItemProcessor<OutReachRegisteredDTO, OutReachRegisteredDTO> xlOutReachRegisteredProcessor() {
 		return new OutReachRegisteredProcessor();
+	}
+
+	@Bean
+	ItemProcessor<OutReachEventSummeryDTO, OutReachEventSummeryDTO> xlOutReachEventSummeryProcessor() {
+		return new OutReachEventSummeryProcessor();
 	}
 
 	@Bean
@@ -93,13 +114,24 @@ public class XlFileToDatabaseConfig {
 
 	@Bean
 	public JdbcBatchItemWriter<OutReachRegisteredDTO> xlOutReachRegisteredWriter() {
-		JdbcBatchItemWriter<OutReachRegisteredDTO> csvOutReachRegisteredWriter = new JdbcBatchItemWriter<OutReachRegisteredDTO>();
-		csvOutReachRegisteredWriter.setItemSqlParameterSourceProvider(
+		JdbcBatchItemWriter<OutReachRegisteredDTO> xlOutReachRegisteredWriter = new JdbcBatchItemWriter<OutReachRegisteredDTO>();
+		xlOutReachRegisteredWriter.setItemSqlParameterSourceProvider(
 				new BeanPropertyItemSqlParameterSourceProvider<OutReachRegisteredDTO>());
-		csvOutReachRegisteredWriter.setSql(
+		xlOutReachRegisteredWriter.setSql(
 				"INSERT INTO hackfac.outreach_registered (event_id, event_name, beneficiary_name, base_location, event_date, emp_id) VALUES (:eventId, :eventName, :beneficiaryName, :baseLocation, :eventDate, :empId)");
-		csvOutReachRegisteredWriter.setDataSource(dataSource);
-		return csvOutReachRegisteredWriter;
+		xlOutReachRegisteredWriter.setDataSource(dataSource);
+		return xlOutReachRegisteredWriter;
+	}
+
+	@Bean
+	public JdbcBatchItemWriter<OutReachEventSummeryDTO> xlOutReachEventSummeryWriter() {
+		JdbcBatchItemWriter<OutReachEventSummeryDTO> xlOutReachEventSummeryWriter = new JdbcBatchItemWriter<OutReachEventSummeryDTO>();
+		xlOutReachEventSummeryWriter.setItemSqlParameterSourceProvider(
+				new BeanPropertyItemSqlParameterSourceProvider<OutReachEventSummeryDTO>());
+		xlOutReachEventSummeryWriter.setSql(
+				"INSERT INTO hackfac.outreach_event_summery (event_id, month, base_location, beneficiary_name, venue_address, council_name, project, category, event_name, event_description, event_date, total_volunteer, total_volunteer_hour, total_travle_houres, overall_volunteer_hours) VALUES (:eventId, :month, :baseLocation, :beneficiaryName, :venueAddress, :councilName, :project, :category, :eventName, :eventDescription, :eventDate, :totalVolunteer, :totalVolunteerHour, :totalTravleHoures, :overallVolunteerHours)");
+		xlOutReachEventSummeryWriter.setDataSource(dataSource);
+		return xlOutReachEventSummeryWriter;
 	}
 
 	// end reader, writer, and processor
@@ -120,9 +152,16 @@ public class XlFileToDatabaseConfig {
 	}
 
 	@Bean
+	public Step xlFileToDatabaseStep3() throws MalformedURLException {
+		return stepBuilderFactory.get("XlFileToDatabaseStep3")
+				.<OutReachEventSummeryDTO, OutReachEventSummeryDTO>chunk(10).reader(xlOutReachEventSummeryReader())
+				.processor(xlOutReachEventSummeryProcessor()).writer(xlOutReachEventSummeryWriter()).build();
+	}
+
+	@Bean
 	Job csvFileToDatabaseJob(JobCompletionNotificationListener listener) throws MalformedURLException {
 		return jobBuilderFactory.get("XlFileToDatabaseJob").incrementer(new RunIdIncrementer()).listener(listener)
-				.start(xlFileToDatabaseStep1()).next(xlFileToDatabaseStep2()).build();
+				.start(xlFileToDatabaseStep1()).next(xlFileToDatabaseStep2()).next(xlFileToDatabaseStep3()).build();
 	}
 	// end job info
 }

@@ -19,7 +19,7 @@ public class OutReachNotRegisteredProcessor implements ItemProcessor<OutReachNot
         final String eventDate = OutReachNotRegisteredDTO.getEventDate();
         final String empId = OutReachNotRegisteredDTO.getEmpId();
         MailConfig MailConfig =new MailConfig();
-        MailConfig.sendMail(empId);
+        //MailConfig.sendMail(empId);
         final OutReachNotRegisteredDTO transformedOutReachNotRegisteredDTO = new OutReachNotRegisteredDTO(eventId, eventName, beneficiaryName,baseLocation,eventDate,empId);
 
         log.info("Converting (" + OutReachNotRegisteredDTO + ") into (" + transformedOutReachNotRegisteredDTO + ")");

@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import com.hackfac.DTO.OutReachEventSummeryDTO;
 import com.hackfac.DTO.OutReachNotRegisteredDTO;
 import com.hackfac.DTO.OutReachRegisteredDTO;
 
@@ -47,6 +48,13 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
 					return new OutReachRegisteredDTO(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6));
 				}
 			});
+			
+			List<OutReachEventSummeryDTO> results3 = jdbcTemplate.query("SELECT event_id, month, base_location, beneficiary_name, venue_address, council_name, project, category, event_name, event_description, event_date, total_volunteer, total_volunteer_hour, total_travle_houres, overall_volunteer_hours  FROM hackfac.outreach_event_summery", new RowMapper<OutReachEventSummeryDTO>() {
+				@Override
+				public OutReachEventSummeryDTO mapRow(ResultSet rs, int row) throws SQLException {
+					return new OutReachEventSummeryDTO(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6),rs.getString(7),rs.getString(8),rs.getString(9),rs.getString(10),rs.getString(11),rs.getString(12),rs.getString(13),rs.getString(14),rs.getString(15));
+				}
+			});
 
 			for (OutReachNotRegisteredDTO OutReachNotRegisteredDTO : results1) {
 				log.info("Discovered <" + OutReachNotRegisteredDTO + "> in the database.");
@@ -54,6 +62,10 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
 			
 			for (OutReachRegisteredDTO OutReachRegisteredDTO : results2) {
 				log.info("Discovered <" + OutReachRegisteredDTO + "> in the database.");
+			}
+			
+			for (OutReachEventSummeryDTO OutReachEventSummeryDTO : results3) {
+				log.info("Discovered <" + OutReachEventSummeryDTO + "> in the database.");
 			}
 
 		}

@@ -19,7 +19,7 @@ public class OutReachRegisteredProcessor implements ItemProcessor<OutReachRegist
         final String eventDate = OutReachRegisteredDTO.getEventDate();
         final String empId = OutReachRegisteredDTO.getEmpId();
         MailConfig MailConfig =new MailConfig();
-        MailConfig.sendMail(empId);
+        //MailConfig.sendMail(empId);
         final OutReachRegisteredDTO transformedOutReachRegisteredDTO = new OutReachRegisteredDTO(eventId, eventName, beneficiaryName,baseLocation,eventDate,empId);
 
         log.info("Converting (" + OutReachRegisteredDTO + ") into (" + transformedOutReachRegisteredDTO + ")");
