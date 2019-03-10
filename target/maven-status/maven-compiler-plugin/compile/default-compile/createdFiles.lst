@@ -1,6 +1,8 @@
 com\hackfac\rowmapper\NonRegisterUserRowmapper.class
+com\hackfac\processoe\OutReachEventInfoProcessor.class
 com\hackfac\DTO\OutReachEventSummeryDTO.class
 com\hackfac\config\MailConfig.class
+com\hackfac\listener\JobCompletionNotificationListener$4.class
 com\hackfac\rowmapper\EventSummeryRowmapper.class
 com\hackfac\listener\JobCompletionNotificationListener$2.class
 com\hackfac\reposortory\XlFileToDatabaseConfig.class
@@ -13,7 +15,9 @@ com\hackfac\rowmapper\RegisterUserRowmapper.class
 com\hackfac\processoe\OutReachRegisteredProcessor.class
 com\hackfac\processoe\OutReachEventSummeryProcessor.class
 com\hackfac\config\MailConfig$1.class
+com\hackfac\rowmapper\EventInfoRowmapper.class
 com\hackfac\listener\JobCompletionNotificationListener$1.class
 com\hackfac\processoe\OutReachNotRegisteredProcessor.class
 com\hackfac\DTO\OutReachRegisteredDTO.class
 com\hackfac\config\EmailUtil.class
+com\hackfac\DTO\OutReachEventInfoDTO.class

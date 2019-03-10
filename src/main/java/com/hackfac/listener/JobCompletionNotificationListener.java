@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import com.hackfac.DTO.OutReachEventInfoDTO;
 import com.hackfac.DTO.OutReachEventSummeryDTO;
 import com.hackfac.DTO.OutReachNotRegisteredDTO;
 import com.hackfac.DTO.OutReachRegisteredDTO;
@@ -55,6 +56,13 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
 					return new OutReachEventSummeryDTO(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6),rs.getString(7),rs.getString(8),rs.getString(9),rs.getString(10),rs.getString(11),rs.getString(12),rs.getString(13),rs.getString(14),rs.getString(15));
 				}
 			});
+			
+			List<OutReachEventInfoDTO> results4 = jdbcTemplate.query("SELECT event_id, base_location, beneficiary_name, council_name, event_name, event_description, event_date, emp_id, emp_name, volunteer_hour, travle_houres, lives_impacted, business_unit, status, iiep_category  FROM hackfac.outreach_event_info", new RowMapper<OutReachEventInfoDTO>() {
+				@Override
+				public OutReachEventInfoDTO mapRow(ResultSet rs, int row) throws SQLException {
+					return new OutReachEventInfoDTO(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6),rs.getString(7),rs.getString(8),rs.getString(9),rs.getString(10),rs.getString(11),rs.getString(12),rs.getString(13),rs.getString(14),rs.getString(15));
+				}
+			});
 
 			for (OutReachNotRegisteredDTO OutReachNotRegisteredDTO : results1) {
 				log.info("Discovered <" + OutReachNotRegisteredDTO + "> in the database.");
@@ -66,6 +74,10 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
 			
 			for (OutReachEventSummeryDTO OutReachEventSummeryDTO : results3) {
 				log.info("Discovered <" + OutReachEventSummeryDTO + "> in the database.");
+			}
+			
+			for (OutReachEventInfoDTO OutReachEventInfoDTO : results4) {
+				log.info("Discovered <" + OutReachEventInfoDTO + "> in the database.");
 			}
 
 		}

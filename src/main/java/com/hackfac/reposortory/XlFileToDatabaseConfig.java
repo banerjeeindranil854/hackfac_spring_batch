@@ -21,13 +21,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.UrlResource;
 
+import com.hackfac.DTO.OutReachEventInfoDTO;
 import com.hackfac.DTO.OutReachEventSummeryDTO;
 import com.hackfac.DTO.OutReachNotRegisteredDTO;
 import com.hackfac.DTO.OutReachRegisteredDTO;
 import com.hackfac.listener.JobCompletionNotificationListener;
+import com.hackfac.processoe.OutReachEventInfoProcessor;
 import com.hackfac.processoe.OutReachEventSummeryProcessor;
 import com.hackfac.processoe.OutReachNotRegisteredProcessor;
 import com.hackfac.processoe.OutReachRegisteredProcessor;
+import com.hackfac.rowmapper.EventInfoRowmapper;
 import com.hackfac.rowmapper.EventSummeryRowmapper;
 import com.hackfac.rowmapper.NonRegisterUserRowmapper;
 import com.hackfac.rowmapper.RegisterUserRowmapper;
@@ -44,6 +47,9 @@ public class XlFileToDatabaseConfig {
 
 	@Value("${outreach.eventsummery}")
 	private String eventsummery;
+	
+	@Value("${outreach.eventinfo}")
+	private String eventinfo;
 
 	@Autowired
 	public JobBuilderFactory jobBuilderFactory;
@@ -85,6 +91,16 @@ public class XlFileToDatabaseConfig {
 		reader.setRowMapper(new EventSummeryRowmapper());
 		return reader;
 	}
+	
+	@Bean
+	public ItemReader<OutReachEventInfoDTO> xlOutReachEventInfoReader() throws MalformedURLException {
+		PoiItemReader<OutReachEventInfoDTO> reader = new PoiItemReader<>();
+
+		reader.setLinesToSkip(1);
+		reader.setResource(new UrlResource("file:" + eventinfo));
+		reader.setRowMapper(new EventInfoRowmapper());
+		return reader;
+	}
 
 	@Bean
 	ItemProcessor<OutReachNotRegisteredDTO, OutReachNotRegisteredDTO> xlOutReachNotRegisteredProcessor() {
@@ -99,6 +115,11 @@ public class XlFileToDatabaseConfig {
 	@Bean
 	ItemProcessor<OutReachEventSummeryDTO, OutReachEventSummeryDTO> xlOutReachEventSummeryProcessor() {
 		return new OutReachEventSummeryProcessor();
+	}
+	
+	@Bean
+	ItemProcessor<OutReachEventInfoDTO, OutReachEventInfoDTO> xlOutReachEventInfoProcessor() {
+		return new OutReachEventInfoProcessor();
 	}
 
 	@Bean
@@ -133,6 +154,17 @@ public class XlFileToDatabaseConfig {
 		xlOutReachEventSummeryWriter.setDataSource(dataSource);
 		return xlOutReachEventSummeryWriter;
 	}
+	
+	@Bean
+	public JdbcBatchItemWriter<OutReachEventInfoDTO> xlOutReachEventInfoWriter() {
+		JdbcBatchItemWriter<OutReachEventInfoDTO> xlOutReachEventInfoWriter = new JdbcBatchItemWriter<OutReachEventInfoDTO>();
+		xlOutReachEventInfoWriter.setItemSqlParameterSourceProvider(
+				new BeanPropertyItemSqlParameterSourceProvider<OutReachEventInfoDTO>());
+		xlOutReachEventInfoWriter.setSql(
+				"INSERT INTO hackfac.outreach_event_info (event_id, base_location, beneficiary_name, council_name, event_name, event_description, event_date, emp_id, emp_name, volunteer_hour, travle_houres, lives_impacted, business_unit, status, iiep_category) VALUES (:eventId, :baseLocation, :beneficiaryName, :councilName, :eventName, :eventDescription, :eventDate, :empId, :empName, :volunteerHour, :travleHoures, :livesImpacted, :businessUnit, :status, :iIEPCategory)");
+		xlOutReachEventInfoWriter.setDataSource(dataSource);
+		return xlOutReachEventInfoWriter;
+	}
 
 	// end reader, writer, and processor
 
@@ -157,11 +189,18 @@ public class XlFileToDatabaseConfig {
 				.<OutReachEventSummeryDTO, OutReachEventSummeryDTO>chunk(10).reader(xlOutReachEventSummeryReader())
 				.processor(xlOutReachEventSummeryProcessor()).writer(xlOutReachEventSummeryWriter()).build();
 	}
+	
+	@Bean
+	public Step xlFileToDatabaseStep4() throws MalformedURLException {
+		return stepBuilderFactory.get("XlFileToDatabaseStep4")
+				.<OutReachEventInfoDTO, OutReachEventInfoDTO>chunk(10).reader(xlOutReachEventInfoReader())
+				.processor(xlOutReachEventInfoProcessor()).writer(xlOutReachEventInfoWriter()).build();
+	}
 
 	@Bean
 	Job csvFileToDatabaseJob(JobCompletionNotificationListener listener) throws MalformedURLException {
 		return jobBuilderFactory.get("XlFileToDatabaseJob").incrementer(new RunIdIncrementer()).listener(listener)
-				.start(xlFileToDatabaseStep1()).next(xlFileToDatabaseStep2()).next(xlFileToDatabaseStep3()).build();
+				.start(xlFileToDatabaseStep1()).next(xlFileToDatabaseStep2()).next(xlFileToDatabaseStep3()).next(xlFileToDatabaseStep4()).build();
 	}
 	// end job info
 }
